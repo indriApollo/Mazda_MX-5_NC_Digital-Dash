@@ -1,0 +1,28 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="DigitalDash.UserControls.DriverInputs">
+    <UserControl.Styles>
+        <Style Selector="Image">
+            <Setter Property="Width" Value="36"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="ProgressBar">
+            <Setter Property="Height" Value="18"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Background" Value="DarkSlateGray"/>
+        </Style>
+    </UserControl.Styles>
+    <Grid ColumnDefinitions="64,Auto" RowDefinitions="40,40,40,40">
+        <Image Source="/Assets/pedal.png" Grid.Row="0" Grid.Column="0"/>
+        <ProgressBar Name="Accelerator" Minimum="0" Maximum="100" Foreground="DodgerBlue" Grid.Row="0" Grid.Column="1"/>
+        <Image Source="/Assets/throttle.png" Grid.Row="1" Grid.Column="0"/>
+        <ProgressBar Name="Throttle" Minimum="0" Maximum="100" Foreground="LawnGreen" Grid.Row="1" Grid.Column="1"/>
+        <Image Source="/Assets/engine.png" Grid.Row="2" Grid.Column="0"/>
+        <ProgressBar Name="EngineLoad" Minimum="0" Maximum="100" Foreground="Yellow" Grid.Row="2" Grid.Column="1"/>
+        <Image Source="/Assets/brake.png" Grid.Row="3" Grid.Column="0"/>
+        <ProgressBar Name="Brakes" Minimum="0" Maximum="100" Foreground="Red" Grid.Row="3" Grid.Column="1"/>
+    </Grid>
+</UserControl>

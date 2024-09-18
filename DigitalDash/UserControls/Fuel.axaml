@@ -1,0 +1,18 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="DigitalDash.UserControls.Fuel">
+    <Grid ColumnDefinitions="42,Auto" RowDefinitions="Auto,Auto,Auto">
+        <Image Source="/Assets/fuel.png" Width="36" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="0"/>
+        <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="1">
+            <TextBlock Name="FuelGauge" Classes="Number" Width="40">000</TextBlock>
+            <TextBlock>%</TextBlock>
+        </StackPanel>
+        <TextBlock Name="FuelPerLap" Classes="Number" Grid.Row="1" Grid.Column="0">00</TextBlock>
+        <TextBlock Grid.Row="1" Grid.Column="1">% / Lap</TextBlock>
+        <TextBlock Name="LapsRemaining" Classes="Number" Grid.Row="2" Grid.Column="0">00</TextBlock>
+        <TextBlock Grid.Row="2" Grid.Column="1">Remaining</TextBlock>
+    </Grid>
+</UserControl>

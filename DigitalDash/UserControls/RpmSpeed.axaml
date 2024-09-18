@@ -1,0 +1,19 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="DigitalDash.UserControls.RpmSpeed">
+    <UserControl.Styles>
+        <Style Selector="TextBlock.Big">
+            <Setter Property="FontWeight" Value="Bold"></Setter>
+        </Style>
+    </UserControl.Styles>
+    <Grid ColumnDefinitions="Auto,260,Auto" RowDefinitions="Auto,Auto">
+        <TextBlock Grid.Row="0" Grid.Column="0">RPM</TextBlock>
+        <TextBlock Name="Rpm" FontSize="120" Classes="Big Number" Grid.Row="0" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Top">0000</TextBlock>
+        <TextBlock Grid.Row="1" Grid.Column="0">Speed</TextBlock>
+        <TextBlock Name="Speed" FontSize="100" Classes="Big Number" Grid.Row="1" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Top">000</TextBlock>
+        <TextBlock Grid.Row="1" Grid.Column="2" VerticalAlignment="Center">Km/h</TextBlock>
+    </Grid>
+</UserControl>

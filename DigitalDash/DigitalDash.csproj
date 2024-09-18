@@ -1,0 +1,67 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net8.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+        <ApplicationManifest>app.manifest</ApplicationManifest>
+        <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Avalonia" Version="11.0.10"/>
+        <PackageReference Include="Avalonia.Desktop" Version="11.0.10"/>
+        <PackageReference Include="Avalonia.LinuxFramebuffer" Version="11.0.10" />
+        <PackageReference Include="Avalonia.Themes.Fluent" Version="11.0.10"/>
+        <PackageReference Include="Avalonia.Fonts.Inter" Version="11.0.10"/>
+        <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
+        <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.0.10"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Update="UserControls\Chrono.axaml.cs">
+        <DependentUpon>Chrono.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="UserControls\DriverInputs.axaml.cs">
+        <DependentUpon>DriverInputs.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="UserControls\Fuel.axaml.cs">
+        <DependentUpon>Fuel.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="UserControls\RpmBar.axaml.cs">
+        <DependentUpon>RpmBar.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="UserControls\RpmSpeed.axaml.cs">
+        <DependentUpon>RpmSpeed.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="UserControls\Temperatures.axaml.cs">
+        <DependentUpon>Temperatures.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="UserControls\WheelSpeeds.axaml.cs">
+        <DependentUpon>WheelSpeeds.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="Views\MainSingleView.axaml.cs">
+        <DependentUpon>MainSingleView.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="Views\MainView.axaml.cs">
+        <DependentUpon>MainView.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="Views\MainWindow.axaml.cs">
+        <DependentUpon>MainWindow.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <AvaloniaResource Include="Assets\**"/>
+    </ItemGroup>
+</Project>

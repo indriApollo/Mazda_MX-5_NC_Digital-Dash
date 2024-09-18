@@ -1,0 +1,18 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="DigitalDash.UserControls.Chrono">
+    <Grid ColumnDefinitions="90,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+        <TextBlock Name="Delta" Classes="Number" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" HorizontalAlignment="Center">000</TextBlock>
+        <TextBlock Grid.Row="1" Grid.Column="0">STINT</TextBlock>
+        <TextBlock Name="Stint" Classes="Number" Grid.Row="1" Grid.Column="1">00:00</TextBlock>
+        <TextBlock Grid.Row="2" Grid.Column="0">BEST</TextBlock>
+        <TextBlock Name="Best" Classes="Number" Grid.Row="2" Grid.Column="1">00:00:0</TextBlock>
+        <TextBlock Grid.Row="3" Grid.Column="0">LAST</TextBlock>
+        <TextBlock Name="Last" Classes="Number" Grid.Row="3" Grid.Column="1">00:00:0</TextBlock>
+        <TextBlock Grid.Row="4" Grid.Column="0">COUNT</TextBlock>
+        <TextBlock Name="Count" Classes="Number" Grid.Row="4" Grid.Column="1">000</TextBlock>
+    </Grid>
+</UserControl>

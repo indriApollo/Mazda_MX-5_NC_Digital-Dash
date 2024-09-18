@@ -1,0 +1,23 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="DigitalDash.App"
+             RequestedThemeVariant="Default">
+             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+
+    <Application.Styles>
+        <FluentTheme />
+        <Style Selector="Grid">
+            <Setter Property="Background" Value="Black"/>
+        </Style>
+        <Style Selector="TextBlock">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontFamily" Value="Monomaniac One"/>
+            <Setter Property="FontSize" Value="32"/>
+            <Setter Property="Padding" Value="0 -8 0 -8"></Setter>
+        </Style>
+        <Style Selector="TextBlock.Number">
+            <Setter Property="FontFamily" Value="Share Tech Mono"/>
+            <Setter Property="Padding" Value="0"></Setter>
+        </Style>
+    </Application.Styles>
+</Application>

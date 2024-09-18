@@ -1,0 +1,20 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="DigitalDash.UserControls.Temperatures">
+    <UserControl.Styles>
+        <Style Selector="Image">
+            <Setter Property="Width" Value="36"/>
+            <Setter Property="VerticalAlignment" Value="Bottom"/>
+        </Style>
+    </UserControl.Styles>
+    <Grid ColumnDefinitions="Auto,120,Auto,36" RowDefinitions="34,Auto">
+        <TextBlock HorizontalAlignment="Right" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4">Temperature °C</TextBlock>
+        <Image Source="/Assets/coolant.png" Grid.Row="1" Grid.Column="0"></Image>
+        <TextBlock Name="Coolant" Classes="Number" FontSize="68" Grid.Row="1" Grid.Column="1" VerticalAlignment="Bottom">000</TextBlock>
+        <Image Source="/Assets/intake.png" Grid.Row="1" Grid.Column="2"></Image>
+        <TextBlock Name="Intake" Classes="Number" Padding="0 0 0 6" Grid.Row="1" Grid.Column="3" VerticalAlignment="Bottom">000</TextBlock>
+    </Grid>
+</UserControl>

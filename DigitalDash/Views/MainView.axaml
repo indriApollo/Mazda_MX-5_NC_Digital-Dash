@@ -1,0 +1,21 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:userControls="clr-namespace:DigitalDash.UserControls"
+             mc:Ignorable="d"
+             d:DesignWidth="1024"
+             d:DesignHeight="600"
+             Width="1024"
+             Height="600"
+             x:Class="DigitalDash.Views.MainView">
+    <Grid ColumnDefinitions="*,400,*" RowDefinitions="120,*,*">
+        <userControls:RpmBar Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" HorizontalAlignment="Center"/>
+        <userControls:Fuel Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Margin="12 0 0 0"/>
+        <userControls:RpmSpeed Grid.Row="1" Grid.Column="1" HorizontalAlignment="Center"/>
+        <userControls:Temperatures Grid.Row="1" Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0 0 12 0"/>
+        <userControls:WheelSpeeds Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Margin="12 0 0 0"/>
+        <userControls:Chrono Grid.Row="2" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        <userControls:DriverInputs Grid.Row="2" Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0 0 12 0"/>
+    </Grid>
+</UserControl>
