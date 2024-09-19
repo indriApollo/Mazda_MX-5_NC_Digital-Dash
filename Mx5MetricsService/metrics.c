@@ -50,13 +50,13 @@
 #define PCT_DIV               2.55f
 #define TEMP_OFFSET           40
 
-#define FUEL_LEVEL_SAMPLES_COUNT 10
+#define FUEL_LEVEL_SAMPLES_COUNT 30
 
 #include "metrics.h"
 #include <stdio.h>
 #include <assert.h>
 
-static uint8_t fuel_level_samples[FUEL_LEVEL_SAMPLES_COUNT] = {0};
+static uint8_t fuel_level_samples[FUEL_LEVEL_SAMPLES_COUNT] = {128};
 static uint16_t fuel_level_samples_sum = 0;
 static uint8_t fuel_levels_samples_pos = 0;
 
