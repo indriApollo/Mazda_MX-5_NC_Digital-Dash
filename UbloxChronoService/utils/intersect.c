@@ -12,15 +12,15 @@
 #define CLOCKWISE 1
 #define COUNTERCLOCKWISE 2
 
-int32_t max(const int32_t a, const int32_t b) {
+static int32_t max(const int32_t a, const int32_t b) {
     return a > b ? a : b;
 }
 
-int32_t min(const int32_t a, const int32_t b) {
+static int32_t min(const int32_t a, const int32_t b) {
     return a < b ? a : b;
 }
 
-bool on_segment(const coord p, const coord q, const coord r) {
+static bool on_segment(const coord p, const coord q, const coord r) {
     if (q.lon <= max(p.lon, r.lon) && q.lon >= min(p.lon, r.lon) &&
         q.lat <= max(p.lat, r.lat) && q.lat >= min(p.lat, r.lat))
         return true;
@@ -28,7 +28,7 @@ bool on_segment(const coord p, const coord q, const coord r) {
     return false;
 }
 
-int32_t orientation(const coord p, const coord q, const coord r) {
+static int32_t orientation(const coord p, const coord q, const coord r) {
     const int32_t o = (q.lat - p.lat) * (r.lon - q.lon) - (q.lon - p.lon) * (r.lat - q.lat);
 
     if (o == 0) return COLLINEAR;

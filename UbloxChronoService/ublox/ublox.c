@@ -48,14 +48,14 @@ struct {
     uint8_t *ubx_msg;
 } buffer_read = { 0, UBX_MIN_LEN, SEARCH_FOR_SYNC, NULL };
 
-void reset_read(const int nbytes_to_keep) {
+static void reset_read(const int nbytes_to_keep) {
     buffer_read.ubx_msg = NULL;
     buffer_read.offset = nbytes_to_keep;
     buffer_read.requested_count = UBX_MIN_LEN - nbytes_to_keep;
     buffer_read.progress = SEARCH_FOR_SYNC;
 }
 
-int set_uint8_cfg(uint8_t *buf, const uint32_t cfg_key, const bool status) {
+static int set_uint8_cfg(uint8_t *buf, const uint32_t cfg_key, const bool status) {
     memcpy(buf, &cfg_key, CFG_KEY_SIZE);
     buf[CFG_KEY_SIZE] = status;
 
@@ -63,11 +63,11 @@ int set_uint8_cfg(uint8_t *buf, const uint32_t cfg_key, const bool status) {
 }
 
 // ReSharper disable once CppDFAConstantFunctionResult
-int set_bool_cfg(uint8_t *buf, const uint32_t cfg_key, const bool status) {
+static int set_bool_cfg(uint8_t *buf, const uint32_t cfg_key, const bool status) {
     return set_uint8_cfg(buf, cfg_key, status);
 }
 
-int set_uint16_cfg(uint8_t *buf, const uint32_t cfg_key, const uint16_t val) {
+static int set_uint16_cfg(uint8_t *buf, const uint32_t cfg_key, const uint16_t val) {
     const int val_size = sizeof(uint16_t);
     memcpy(buf, &cfg_key, CFG_KEY_SIZE);
     memcpy(buf + CFG_KEY_SIZE, &val, val_size);
@@ -75,7 +75,7 @@ int set_uint16_cfg(uint8_t *buf, const uint32_t cfg_key, const uint16_t val) {
     return CFG_KEY_SIZE + val_size;
 }
 
-int send_cmd(const int fd, const uint8_t *cmd, const int n) {
+static int send_cmd(const int fd, const uint8_t *cmd, const int n) {
     const ssize_t c = write(fd, cmd, n);
     if (c == -1) {
         perror("send_cmd write");
@@ -92,7 +92,7 @@ int send_cmd(const int fd, const uint8_t *cmd, const int n) {
     return 0;
 }
 
-void handle_ubx_nav_posllh(const uint8_t *msg) {
+static void handle_ubx_nav_posllh(const uint8_t *msg) {
     assert(as_uint16(msg + UBX_LEN_OFFSET) == 28);
 
     const int32_t lon = as_int32(msg + UBX_PAYLOAD_OFFSET + 4);
@@ -107,7 +107,7 @@ void handle_ubx_nav_posllh(const uint8_t *msg) {
     }
 }
 
-void handle_ubx_nav_status(const uint8_t *msg) {
+static void handle_ubx_nav_status(const uint8_t *msg) {
     assert(as_uint16(msg + UBX_LEN_OFFSET) == 16);
 
     const uint8_t gps_fix = msg[UBX_PAYLOAD_OFFSET + 4];
@@ -119,7 +119,7 @@ void handle_ubx_nav_status(const uint8_t *msg) {
     printf("gps fix %d, flags %d, status %d, ttff %d, msss %d\n", gps_fix, flags, status, ttff, msss);
 }
 
-int handle_ubx_nav(const uint8_t *msg) {
+static int handle_ubx_nav(const uint8_t *msg) {
     const uint8_t msg_id = msg[UBX_ID_OFFSET];
 
     switch (msg_id) {
@@ -136,7 +136,7 @@ int handle_ubx_nav(const uint8_t *msg) {
     return 0;
 }
 
-int handle_ubx_mon(const uint8_t *msg) {
+static int handle_ubx_mon(const uint8_t *msg) {
     const uint8_t msg_id = msg[UBX_ID_OFFSET];
 
     if (msg_id != UBX_MON_VER) return UNHANDLED_MSG;
@@ -156,7 +156,7 @@ int handle_ubx_mon(const uint8_t *msg) {
     return 0;
 }
 
-int handle_ubx_ack(const uint8_t* msg) {
+static int handle_ubx_ack(const uint8_t* msg) {
     const bool is_ack = msg[UBX_ID_OFFSET] == 1;
 
     const uint8_t acked_msg_class = msg[UBX_PAYLOAD_OFFSET];
@@ -171,7 +171,7 @@ int handle_ubx_ack(const uint8_t* msg) {
     return 0;
 }
 
-int handle_ublox_msg(const uint8_t* msg) {
+static int handle_ublox_msg(const uint8_t* msg) {
     const uint8_t msg_class = msg[UBX_CLASS_OFFSET];
 
     switch (msg_class) {
