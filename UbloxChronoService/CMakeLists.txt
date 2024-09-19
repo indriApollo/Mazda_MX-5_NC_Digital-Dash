@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.28)
-project(UbloxGnssService C)
+project(UbloxChronoService C)
 
 set(CMAKE_C_STANDARD 17)
 
-add_executable(UbloxGnssService main.c
+add_executable(UbloxChronoService main.c
         utils/fletcher8.c
         utils/fletcher8.h
         serial/serial_port.c
