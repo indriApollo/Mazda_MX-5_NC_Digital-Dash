@@ -23,7 +23,7 @@ struct chrono {
     uint32_t best_lap_time;
     uint32_t previous_lap_time;
     uint32_t current_lap_time;
-    uint32_t previous_sector_delta_time;
+    int32_t previous_sector_delta_time;
     uint16_t best_lap_n;
     uint16_t current_lap_n;
 };
