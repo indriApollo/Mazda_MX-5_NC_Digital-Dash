@@ -68,6 +68,6 @@ int configure_ublox(int fd);
 
 int request_ublox_version(int fd);
 
-void set_ublox_position_callback(void (*callback)(coord pos), uint32_t max_acc);
+void set_ublox_position_callback(void (*callback)(coord pos, void *arg), uint32_t max_acc, void *arg);
 
 #endif //UBLOX_H

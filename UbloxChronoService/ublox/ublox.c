@@ -29,8 +29,9 @@
 #define CFG_NAVSPG_FIXMODE_2DONLY   1
 #define CFG_NAVSPG_DYNMODEL_AUTOMOT 4
 
-void (*position_callback)(coord pos) = NULL;
+void (*position_callback)(coord pos, void *arg) = NULL;
 uint32_t position_callback_max_acc = 0;
+void *position_callback_arg = NULL;
 
 uint8_t input_buffer[256];
 
@@ -102,7 +103,7 @@ void handle_ubx_nav_posllh(const uint8_t *msg) {
 
     if (position_callback != NULL && h_acc <= position_callback_max_acc) {
         const coord pos = { .lon = lon, .lat = lat };
-        (*position_callback)(pos);
+        (*position_callback)(pos, position_callback_arg);
     }
 }
 
@@ -357,7 +358,8 @@ int request_ublox_version(const int fd) {
     return send_cmd(fd, ubx_msg, sizeof(ubx_msg));
 }
 
-void set_ublox_position_callback(void (*callback)(coord pos), const uint32_t max_acc) {
+void set_ublox_position_callback(void (*callback)(coord pos, void *arg), const uint32_t max_acc, void *arg) {
     position_callback = callback;
     position_callback_max_acc = max_acc;
+    position_callback_arg = arg;
 }

@@ -1,10 +1,11 @@
 #include <stdio.h>
-#include <stdint.h>
 #include <stdlib.h>
 #include <sys/epoll.h>
 #include <unistd.h>
 #include <signal.h>
 #include <sys/signalfd.h>
+#include <sys/mman.h>
+#include <fcntl.h>
 
 #include "chrono/chrono.h"
 #include "ublox/ublox.h"
@@ -17,7 +18,32 @@
 
 #define SERIAL_PORT_NAME   "/dev/serial/by-id/usb-u-blox_AG_-_www.u-blox.com_u-blox_GNSS_receiver-if00"
 #define SERIAL_BAUD_RATE   38400
+#define SHM_NAME           "/ubloxchrono"
 #define EPOLL_SINGLE_EVENT 1
+
+static struct chrono* setup_shm() {
+    int fd = shm_open(SHM_NAME, O_CREAT | O_RDWR, 0755);
+    if (fd < 0) {
+        perror("shm_open");
+        exit(EXIT_FAILURE);
+    }
+
+    if (ftruncate(fd, sizeof(struct chrono)) < 0) {
+        perror("ftruncate");
+        exit(EXIT_FAILURE);
+    }
+
+    struct chrono *chrono = mmap(NULL, sizeof(struct chrono), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    if (chrono == MAP_FAILED) {
+        perror("mmap");
+        exit(EXIT_FAILURE);
+    }
+
+    close(fd);
+
+    return chrono;
+}
+
 
 static int setup_signal_handler() {
     sigset_t mask;
@@ -91,9 +117,18 @@ int main(void)
     exit(EXIT_SUCCESS);
     #endif
 
+    struct chrono *chrono = setup_shm();
+    struct gate_segment segments[] = {
+      {.a = {.lon = 1, .lat = 1}, .b = {.lon = 2, .lat = 2} },
+      {.a = {.lon = 1, .lat = 1}, .b = {.lon = 2, .lat = 2} },
+      {.a = {.lon = 1, .lat = 1}, .b = {.lon = 2, .lat = 2} },
+    };
+    struct sector_gates gates = {.current_index = 0, .count = 3, .segments = segments };
+    struct chrono_context chronoContext = {.chrono = chrono, .gates = &gates};
+
     const int signalfd_fd = setup_signal_handler();
 
-    set_ublox_position_callback(&handle_position, 3000);
+    set_ublox_position_callback(&handle_position, 3000, &chronoContext);
 
     printf("Setting up serial port %s@%d\n", SERIAL_PORT_NAME, SERIAL_BAUD_RATE);
     const int ublox_fd = setup_ublox_port(SERIAL_PORT_NAME, SERIAL_BAUD_RATE);
@@ -106,7 +141,7 @@ int main(void)
 
     const int epoll_fd = setup_epoll(signalfd_fd, ublox_fd);
 
-    printf("Ready\n");
+    printf("Ready at /dev/shm%s\n", SHM_NAME);
 
     while(1) {
         struct epoll_event epoll_events[EPOLL_SINGLE_EVENT];
@@ -139,6 +174,7 @@ int main(void)
     close(epoll_fd);
     close(signalfd_fd);
     close_ublox_port(ublox_fd);
+    shm_unlink(SHM_NAME);
 
     printf("Bye :)\n");
 
