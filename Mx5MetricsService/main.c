@@ -129,7 +129,6 @@ int main(void) {
 
     send_stnobd_reset_cmd(&stnobd_context);
 
-
     int epoll_fd = setup_epoll(signalfd_fd, stnobd_fd);
 
     struct epoll_event epoll_events[EPOLL_SINGLE_EVENT];
