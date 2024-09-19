@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include "stnobd.h"
-#include "server.h"
 #include "metrics.h"
 #include <stdlib.h>
 #include <sys/epoll.h>
@@ -12,7 +11,6 @@
 
 #define SERIAL_PORT_NAME   "/dev/pts/3"
 #define SERIAL_BAUD_RATE    921600
-#define SOCKET_NAME        "/tmp/mx5metrics.sock"
 #define SHM_NAME           "/mx5metrics"
 #define EPOLL_SINGLE_EVENT 1
 
@@ -92,7 +90,7 @@ static void epoll_add_fd(int epfd, int fd) {
     }
 }
 
-static int setup_epoll(int signalfd_fd, int stnobd_fd, int socket_fd) {
+static int setup_epoll(int signalfd_fd, int stnobd_fd) {
     int fd = epoll_create1(0);
     if (fd < 0) {
         perror("epoll_create1");
@@ -101,7 +99,6 @@ static int setup_epoll(int signalfd_fd, int stnobd_fd, int socket_fd) {
 
     epoll_add_fd(fd, signalfd_fd);
     epoll_add_fd(fd, stnobd_fd);
-    epoll_add_fd(fd, socket_fd);
 
     return fd;
 }
@@ -132,14 +129,12 @@ int main(void) {
 
     send_stnobd_reset_cmd(&stnobd_context);
 
-    int socket_fd = setup_server_socket(SOCKET_NAME);
-    if (socket_fd < 0) exit(EXIT_FAILURE);
 
-    int epoll_fd = setup_epoll(signalfd_fd, stnobd_fd, socket_fd);
+    int epoll_fd = setup_epoll(signalfd_fd, stnobd_fd);
 
     struct epoll_event epoll_events[EPOLL_SINGLE_EVENT];
 
-    printf("Ready at %s, /dev/shm%s\n", SOCKET_NAME, SHM_NAME);
+    printf("Ready at /dev/shm%s\n", SHM_NAME);
 
     while(1) {
         if (epoll_wait(epoll_fd, epoll_events, EPOLL_SINGLE_EVENT, -1) != EPOLL_SINGLE_EVENT) {
@@ -154,9 +149,6 @@ int main(void) {
 
         if (epoll_events[0].data.fd == stnobd_fd) {
             handle_incoming_stnobd_msg(&stnobd_context, metrics);
-        }
-        else if (epoll_events[0].data.fd == socket_fd) {
-            handle_incoming_server_msg(socket_fd, metrics);
         }
         else if (epoll_events[0].data.fd == signalfd_fd) {
             handle_signal(signalfd_fd);
@@ -173,7 +165,6 @@ int main(void) {
     close(epoll_fd);
     close(signalfd_fd);
     close_stnobd(&stnobd_context);
-    close_server_socket(socket_fd, SOCKET_NAME);
     shm_unlink(SHM_NAME);
 
     printf("Bye :)\n");
