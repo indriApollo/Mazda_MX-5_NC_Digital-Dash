@@ -104,12 +104,13 @@ static void handle_ubx_nav_posllh(const uint8_t *msg) {
     const int32_t lat = as_int32(msg + + UBX_PAYLOAD_OFFSET + 8);
     const uint32_t h_acc = as_uint32(msg + UBX_PAYLOAD_OFFSET + 20);
 
-    printf("lon %d, lat %d, acc %d\n", lon, lat, h_acc);
-
     if (position_callback != NULL && h_acc <= position_callback_max_acc) {
         const coord coord = { .lon = lon, .lat = lat };
         const ts_coord pos = { .coord = coord, .ts = now };
         (*position_callback)(pos, position_callback_arg);
+    }
+    else {
+        printf("inaccurate lon %d, lat%d, acc %d\n", lon, lat, h_acc);
     }
 }
 

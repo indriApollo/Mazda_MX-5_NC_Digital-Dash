@@ -17,7 +17,7 @@ struct timespec lap_start_time;
 void handle_position(const ts_coord pos, void *arg) {
     struct chrono_context *ctx = arg;
 
-    printf("gps pos %d %d\n", pos.coord.lon, pos.coord.lat);
+    //printf("gps pos %d %d\n", pos.coord.lon, pos.coord.lat);
 
     struct timespec lap_time = diff_timespec(&pos.ts, &lap_start_time);
     ctx->chrono->current_lap_time = timespec_to_tenths(&lap_time);
