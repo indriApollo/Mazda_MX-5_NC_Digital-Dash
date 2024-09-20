@@ -25,7 +25,7 @@ public partial class Chrono : UserControl
     private void Refresh()
     {
         var lastSectorDeltaTenths = _logic.LastSectorDeltaTenths;
-        Delta.Foreground = lastSectorDeltaTenths < 0 ? ColorPalette.Green : ColorPalette.Red;
+        Delta.Foreground = lastSectorDeltaTenths > 0 ? ColorPalette.Red : ColorPalette.Green;
         Delta.Text = lastSectorDeltaTenths.ToString();
         
         Stint.Text = _logic.Stint;
