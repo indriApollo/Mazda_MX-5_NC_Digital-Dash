@@ -10,6 +10,9 @@
 struct gate_segment {
     coord a;
     coord b;
+    uint32_t previous_time;
+    uint32_t best_time;
+    uint16_t best_time_lap_n;
 };
 
 struct sector_gates {
@@ -33,6 +36,6 @@ struct chrono_context {
     struct sector_gates *gates;
 };
 
-void handle_position(coord pos, void *arg);
+void handle_position(ts_coord pos, void *arg);
 
 #endif //CHRONO_H

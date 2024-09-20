@@ -29,7 +29,7 @@
 #define CFG_NAVSPG_FIXMODE_2DONLY   1
 #define CFG_NAVSPG_DYNMODEL_AUTOMOT 4
 
-void (*position_callback)(coord pos, void *arg) = NULL;
+void (*position_callback)(ts_coord pos, void *arg) = NULL;
 uint32_t position_callback_max_acc = 0;
 void *position_callback_arg = NULL;
 
@@ -93,6 +93,11 @@ static int send_cmd(const int fd, const uint8_t *cmd, const int n) {
 }
 
 static void handle_ubx_nav_posllh(const uint8_t *msg) {
+    // TODO timestamping a pos like this is not super accurate,
+    // but as we only care about tenths of a second it might no even matter
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC_RAW, &now);
+
     assert(as_uint16(msg + UBX_LEN_OFFSET) == 28);
 
     const int32_t lon = as_int32(msg + UBX_PAYLOAD_OFFSET + 4);
@@ -102,7 +107,8 @@ static void handle_ubx_nav_posllh(const uint8_t *msg) {
     printf("lon %d, lat %d, acc %d\n", lon, lat, h_acc);
 
     if (position_callback != NULL && h_acc <= position_callback_max_acc) {
-        const coord pos = { .lon = lon, .lat = lat };
+        const coord coord = { .lon = lon, .lat = lat };
+        const ts_coord pos = { .coord = coord, .ts = now };
         (*position_callback)(pos, position_callback_arg);
     }
 }
@@ -208,7 +214,7 @@ void close_ublox_port(const int fd) {
 int parse_ublox_msg(const int fd, uint8_t **msg) {
     assert(buffer_read.requested_count > 0);
     assert(buffer_read.offset + buffer_read.requested_count <= sizeof(input_buffer));
-    const ssize_t c = read(fd, input_buffer + buffer_read.offset, buffer_read.requested_count);
+    const int c = (int)read(fd, input_buffer + buffer_read.offset, buffer_read.requested_count);
 
     if (c == -1)
         return -1;
@@ -358,7 +364,7 @@ int request_ublox_version(const int fd) {
     return send_cmd(fd, ubx_msg, sizeof(ubx_msg));
 }
 
-void set_ublox_position_callback(void (*callback)(coord pos, void *arg), const uint32_t max_acc, void *arg) {
+void set_ublox_position_callback(void (*callback)(ts_coord pos, void *arg), const uint32_t max_acc, void *arg) {
     position_callback = callback;
     position_callback_max_acc = max_acc;
     position_callback_arg = arg;

@@ -18,3 +18,17 @@ struct timespec diff_timespec(const struct timespec *t1, const struct timespec *
 
     return diff;
 }
+
+int32_t timespec_to_tenths(struct timespec *timespec) {
+    int32_t tenth = (int32_t)timespec->tv_sec * 10;
+    tenth += (int32_t)(timespec->tv_nsec / (long)1e8);
+    return tenth;
+}
+
+struct timespec tenths_to_timespec(int32_t tenths) {
+    struct timespec timespec = {
+            .tv_sec = tenths / 10,
+            .tv_nsec = (tenths % 10) * (long)1e8
+    };
+    return timespec;
+}

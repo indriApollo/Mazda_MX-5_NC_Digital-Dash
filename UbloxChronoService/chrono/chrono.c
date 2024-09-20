@@ -10,37 +10,40 @@
 #include "../utils/intersect.h"
 #include "../utils/timespec.h"
 
-coord previous_pos;
+coord previous_pos_coord;
 struct timespec sector_start_time;
 struct timespec lap_start_time;
 
-static int32_t timespec_to_tenth(struct timespec *timespec) {
-    int32_t tenth = (int32_t)timespec->tv_sec * 10;
-    tenth += (int32_t)(timespec->tv_nsec / (long)1e8);
-    return tenth;
-}
-
-void handle_position(const coord pos, void *arg) {
+void handle_position(const ts_coord pos, void *arg) {
     struct chrono_context *ctx = arg;
-    struct timespec now, sector_diff;
-    // TODO timestamping a pos like this is not super accurate,
-    // but as we only care about tenths of a second it might no even matter
-    clock_gettime(CLOCK_MONOTONIC_RAW, &now);
 
-    printf("gps pos %d %d\n", pos.lon, pos.lat);
+    printf("gps pos %d %d\n", pos.coord.lon, pos.coord.lat);
 
-    struct timespec lap_time = diff_timespec(&now, &lap_start_time);
-    ctx->chrono->current_lap_time = timespec_to_tenth(&lap_time);
+    struct timespec lap_time = diff_timespec(&pos.ts, &lap_start_time);
+    ctx->chrono->current_lap_time = timespec_to_tenths(&lap_time);
 
     struct gate_segment *current_gate_segment = &ctx->gates->segments[ctx->gates->current_index];
 
-    if (do_intersect(previous_pos, pos, current_gate_segment->a, current_gate_segment->b)) {
-        sector_diff = diff_timespec(&now, &sector_start_time);
-        sector_start_time = now;
+    bool passed_sector_gate = do_intersect(previous_pos_coord, pos.coord, current_gate_segment->a, current_gate_segment->b);
 
-        ctx->chrono->previous_sector_delta_time = timespec_to_tenth(&sector_diff);
+    if (passed_sector_gate) {
+        struct timespec sector_ts = diff_timespec(&pos.ts, &sector_start_time);
+        int32_t sector_time = timespec_to_tenths(&sector_ts);
+        sector_start_time = pos.ts;
 
-        printf("sector %d diff %d", ctx->gates->current_index, ctx->chrono->previous_sector_delta_time);
+        ctx->chrono->previous_sector_delta_time = (int32_t)(sector_time - current_gate_segment->previous_time);
+
+        bool new_best_sector = sector_time < current_gate_segment->best_time
+                || current_gate_segment->best_time == 0;
+
+        if (new_best_sector) {
+            current_gate_segment->best_time = sector_time;
+            current_gate_segment->best_time_lap_n = ctx->chrono->current_lap_n;
+        }
+
+        current_gate_segment->previous_time = sector_time;
+
+        printf("sector %d diff %d\n", ctx->gates->current_index, ctx->chrono->previous_sector_delta_time);
 
         bool passed_start_finish_line = ctx->gates->current_index >= ctx->gates->count - 1;
 
@@ -57,10 +60,15 @@ void handle_position(const coord pos, void *arg) {
             ctx->chrono->current_lap_time = 0;
             ctx->chrono->current_lap_n++;
 
-            lap_start_time = now;
+            lap_start_time = pos.ts;
+
+            ctx->gates->current_index = 0;
+        }
+        else {
+            ctx->gates->current_index++;
         }
     }
 
-    previous_pos = pos;
+    previous_pos_coord = pos.coord;
 }
 

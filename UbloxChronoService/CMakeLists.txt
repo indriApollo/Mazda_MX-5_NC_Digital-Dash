@@ -22,4 +22,6 @@ add_executable(UbloxChronoService main.c
         chrono/chrono.c
         chrono/chrono.h
         utils/timespec.c
-        utils/timespec.h)
+        utils/timespec.h
+        tests/chrono_tests.c
+        tests/chrono_tests.h)

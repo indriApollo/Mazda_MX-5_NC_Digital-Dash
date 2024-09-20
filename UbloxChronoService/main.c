@@ -14,6 +14,7 @@
 
 #ifdef RUN_TESTS
 #include "tests/ublox_tests.h"
+#include "tests/chrono_tests.h"
 #endif
 
 #define SERIAL_PORT_NAME   "/dev/serial/by-id/usb-u-blox_AG_-_www.u-blox.com_u-blox_GNSS_receiver-if00"
@@ -113,7 +114,8 @@ static int setup_epoll(const int signalfd_fd, const int ublox_fd) {
 int main(void)
 {
     #ifdef RUN_TESTS
-    run_ublox_tests();
+    //run_ublox_tests();
+    run_chrono_tests();
     exit(EXIT_SUCCESS);
     #endif
 

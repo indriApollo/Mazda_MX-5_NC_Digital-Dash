@@ -7,6 +7,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "tests.h"
+#include "ublox_tests.h"
 
 #include "../ublox/ublox.h"
 #include "../utils/fletcher8.h"
@@ -14,7 +15,7 @@
 #define PIPE_READ 0
 #define PIPE_WRITE 1
 
-void test_known_good_msg() {
+static void test_known_good_msg() {
     int pipe_fd[2];
     pipe(pipe_fd);
 
@@ -40,7 +41,7 @@ void test_known_good_msg() {
     assert(msg[0] == UBX_SYNC_CHAR_1);
 }
 
-void test_no_payload() {
+static void test_no_payload() {
     int pipe_fd[2];
     pipe(pipe_fd);
 
@@ -68,7 +69,7 @@ void test_no_payload() {
     assert(msg[0] == UBX_SYNC_CHAR_1);
 }
 
-void test_partial_message() {
+static void test_partial_message() {
     int pipe_fd[2];
     pipe(pipe_fd);
 
@@ -102,7 +103,7 @@ void test_partial_message() {
     assert(msg[0] == UBX_SYNC_CHAR_1);
 }
 
-void test_false_start() {
+static void test_false_start() {
     int pipe_fd[2];
     pipe(pipe_fd);
 
@@ -134,7 +135,7 @@ void test_false_start() {
     assert(msg[0] == UBX_SYNC_CHAR_1);
 }
 
-void test_offset_start() {
+static void test_offset_start() {
     int pipe_fd[2];
     pipe(pipe_fd);
 
@@ -168,7 +169,7 @@ void test_offset_start() {
     assert(msg[0] == UBX_SYNC_CHAR_1);
 }
 
-void test_payload() {
+static void test_payload() {
     int pipe_fd[2];
     pipe(pipe_fd);
 
@@ -202,7 +203,7 @@ void test_payload() {
     assert(msg[0] == UBX_SYNC_CHAR_1);
 }
 
-void test_garbage() {
+static void test_garbage() {
     int pipe_fd[2];
     pipe(pipe_fd);
 
@@ -228,7 +229,7 @@ void test_garbage() {
     assert(msg == NULL);
 }
 
-void test_config() {
+static void test_config() {
     int pipe_fd[2];
     pipe(pipe_fd);
 
@@ -251,7 +252,7 @@ void test_config() {
     assert(msg[3] == UBX_CFG_VALSET);
 }
 
-void test_version() {
+static void test_version() {
     int pipe_fd[2];
     pipe(pipe_fd);
 
