@@ -27,8 +27,8 @@ public sealed class ShmChrono : IChrono, IDisposable
     public uint PreviousLapTime => _accessor.ReadUInt32(4);
     public uint CurrentLapTime => _accessor.ReadUInt32(8);
     public int PreviousSectorDeltaTime => _accessor.ReadInt32(12);
-    public ushort BestLapN => _accessor.ReadUInt16(14);
-    public ushort CurrentLapN => _accessor.ReadUInt16(16);
+    public ushort BestLapN => _accessor.ReadUInt16(16);
+    public ushort CurrentLapN => _accessor.ReadUInt16(18);
     
     public void Dispose()
     {
