@@ -9,7 +9,7 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 
-#define SERIAL_PORT_NAME   "/dev/pts/3"
+#define SERIAL_PORT_NAME   "/dev/serial/by-id/usb-FTDI_FT231X_USB_UART_DN069V3P-if00-port0"
 #define SERIAL_BAUD_RATE    921600
 #define SHM_NAME           "/mx5metrics"
 #define EPOLL_SINGLE_EVENT 1
