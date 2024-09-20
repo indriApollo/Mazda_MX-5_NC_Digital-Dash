@@ -110,7 +110,7 @@ static void handle_ubx_nav_posllh(const uint8_t *msg) {
         (*position_callback)(pos, position_callback_arg);
     }
     else {
-        printf("inaccurate lon %d, lat%d, acc %d\n", lon, lat, h_acc);
+        printf("inaccurate lon %d, lat %d, acc %d\n", lon, lat, h_acc);
     }
 }
 
