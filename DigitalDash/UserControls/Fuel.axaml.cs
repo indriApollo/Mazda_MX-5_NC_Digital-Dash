@@ -25,7 +25,7 @@ public partial class Fuel : UserControl
         if (_lapCount != lapCount)
         {
             var fuelConsumedThisLap = _previousFuelLevel - fuelLevel;
-            var remainingLapsAtCurrentFuelConsumption = fuelLevel % fuelConsumedThisLap;
+            var remainingLapsAtCurrentFuelConsumption = fuelLevel / fuelConsumedThisLap;
             
             _previousFuelLevel = fuelLevel;
             _lapCount = lapCount;
