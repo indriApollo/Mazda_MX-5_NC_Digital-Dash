@@ -50,7 +50,7 @@
 #define PCT_DIV               2.55f
 #define TEMP_OFFSET           40
 
-#define FUEL_LEVEL_SAMPLES_COUNT 30
+#define FUEL_LEVEL_SAMPLES_COUNT 128
 
 #include "metrics.h"
 #include <stdio.h>
