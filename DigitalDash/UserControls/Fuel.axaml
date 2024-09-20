@@ -7,7 +7,7 @@
     <Grid ColumnDefinitions="42,Auto" RowDefinitions="Auto,Auto,Auto">
         <Image Source="/Assets/fuel.png" Width="36" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="0"/>
         <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="1">
-            <TextBlock Name="FuelGauge" Classes="Number" Width="40">000</TextBlock>
+            <TextBlock Name="FuelLevel" Classes="Number" Width="40">000</TextBlock>
             <TextBlock>%</TextBlock>
         </StackPanel>
         <TextBlock Name="FuelPerLap" Classes="Number" Grid.Row="1" Grid.Column="0">00</TextBlock>

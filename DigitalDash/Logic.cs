@@ -30,13 +30,13 @@ public class Logic
     public const int CoolantAlertThrC = 100;
     public const int RpmWarningThrPct = 80;
     public const int RpmAlertThrPct = 90;
-    public const int FuelGaugeAlertThrPct = 15;
+    public const int FuelLevelAlertThrPct = 15;
     public const int WheelSpeedDiffAlertThrKmh = 3;
 
     public ushort SpeedKmh => _metrics.SpeedKmh;
     public ushort Rpm => _metrics.Rpm;
     public int RpmPct => _metrics.Rpm / (_metrics.RedLine/100);
-    public int FuelGauge => _metrics.FuelLevelPct;
+    public int FuelLevel => _metrics.FuelLevelPct;
     public int Coolant => _metrics.EngineCoolantTempC;
     public short Intake => _metrics.IntakeAirTempC;
     public int Accelerator => _metrics.AcceleratorPedalPositionPct;
