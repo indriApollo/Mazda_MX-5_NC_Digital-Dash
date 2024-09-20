@@ -9,7 +9,8 @@ namespace DigitalDash;
 // ReSharper disable once ArrangeTypeModifiers
 class Program
 {
-    public static bool SharedMemory { get; private set; } = false;
+    public static bool UseMetricsShmClient { get; private set; } = false;
+    public static bool UseChronoShmClient { get; private set; } = false;
 
     // Initialization code. Don't use any Avalonia, third-party APIs or any
     // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
@@ -17,9 +18,14 @@ class Program
     [STAThread]
     public static int Main(string[] args)
     {
-        if (args.Contains("--shm"))
+        if (args.Contains("--metrics-shm"))
         {
-            SharedMemory = true;
+            UseMetricsShmClient = true;
+        }
+        
+        if (args.Contains("--chrono-shm"))
+        {
+            UseChronoShmClient = true;
         }
         
         var builder = BuildAvaloniaApp();

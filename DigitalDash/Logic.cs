@@ -1,9 +1,8 @@
 using System;
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
 using Avalonia.Threading;
 using DigitalDash.Mx5MetricsClient;
+using DigitalDash.UbloxChronoClient;
 
 namespace DigitalDash;
 
@@ -13,11 +12,13 @@ public class Logic
     private readonly DispatcherTimer _lowSpeedTimer = new();
 
     private readonly IMetrics _metrics;
+    private readonly IChrono _chrono;
     private readonly Stopwatch _stopwatch = Stopwatch.StartNew();
 
-    public Logic(bool sharedMemory)
+    public Logic(bool useMetricsShmClient, bool useChronoShmClient)
     {
-        _metrics = MetricsFactory.GetMetrics(sharedMemory);
+        _metrics = MetricsFactory.GetMetrics(useMetricsShmClient);
+        _chrono = ChronoFactory.GetChrono(useChronoShmClient);
         
         _highSpeedTimer.Interval = TimeSpan.FromMilliseconds(1000d/30d); // 30hz
         _lowSpeedTimer.Interval = TimeSpan.FromMilliseconds(1000); // 1hz
@@ -47,6 +48,11 @@ public class Logic
     public ushort RlSpeed => _metrics.RlSpeedKmh;
     public ushort RrSpeed => _metrics.RrSpeedKmh;
     public string Stint => $"{(int)_stopwatch.Elapsed.TotalMinutes:00}:{_stopwatch.Elapsed.Seconds:00}";
+
+    public int LastSectorDeltaTenths => _chrono.PreviousSectorDeltaTime;
+    public uint BestLapTenths => _chrono.BestLapTime;
+    public uint LastLapTenths => _chrono.PreviousLapTime;
+    public ushort LapCount => _chrono.CurrentLapN;
 
     public void RegisterHighSpeedRefresh(Action action)
     {

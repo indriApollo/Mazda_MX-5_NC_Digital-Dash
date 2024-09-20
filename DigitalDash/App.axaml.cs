@@ -6,7 +6,7 @@ namespace DigitalDash;
 
 public class App : Application
 {
-    public static readonly Logic Logic = new(Program.SharedMemory);
+    public static readonly Logic Logic = new(Program.UseMetricsShmClient, Program.UseChronoShmClient);
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
