@@ -10,7 +10,6 @@ add_executable(UbloxChronoService main.c
         serial/serial_port.h
         ublox/ublox.c
         ublox/ublox.h
-        ublox/ublox.c
         tests/ublox_tests.c
         tests/ublox_tests.h
         tests/tests.h
