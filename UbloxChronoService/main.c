@@ -23,7 +23,7 @@
 #define EPOLL_SINGLE_EVENT 1
 
 static struct chrono* setup_shm() {
-    int fd = shm_open(SHM_NAME, O_CREAT | O_RDWR, 0755);
+    const int fd = shm_open(SHM_NAME, O_CREAT | O_RDWR, 0755);
     if (fd < 0) {
         perror("shm_open");
         exit(EXIT_FAILURE);
@@ -114,7 +114,7 @@ static int setup_epoll(const int signalfd_fd, const int ublox_fd) {
 int main(void)
 {
     #ifdef RUN_TESTS
-    //run_ublox_tests();
+    run_ublox_tests();
     run_chrono_tests();
     exit(EXIT_SUCCESS);
     #endif

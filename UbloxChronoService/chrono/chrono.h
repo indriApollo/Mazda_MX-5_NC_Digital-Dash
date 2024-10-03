@@ -32,6 +32,9 @@ struct chrono {
 };
 
 struct chrono_context {
+    coord previous_pos_coord;
+    struct timespec sector_start_time;
+    struct timespec lap_start_time;
     struct chrono *chrono;
     struct sector_gates *gates;
 };
