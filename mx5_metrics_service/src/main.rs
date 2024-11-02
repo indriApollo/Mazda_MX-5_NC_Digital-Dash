@@ -1,11 +1,19 @@
+mod serial_port;
+
 use nix::sys::signal::{self, sigprocmask, Signal};
 use nix::sys::signalfd::{SigSet, SignalFd};
 use nix::sys::epoll::{Epoll, EpollCreateFlags, EpollEvent, EpollFlags, EpollTimeout};
+use nix::sys::termios::BaudRate;
+use crate::serial_port::{configure_serial_port, open_serial_port_blocking_io, set_serial_port_access_exclusive, set_serial_port_access_nonexclusive};
 
 fn main() {
     enum EpollEventId {
         Signal
     }
+
+    let serial_port = open_serial_port_blocking_io("/dev/pts/1");
+    set_serial_port_access_exclusive(&serial_port);
+    configure_serial_port(&serial_port, 1, 1, BaudRate::B921600);
 
     let sfd = setup_signal_handler();
 
@@ -29,6 +37,8 @@ fn main() {
         }
 
     }
+
+    set_serial_port_access_nonexclusive(&serial_port);
 }
 
 fn setup_signal_handler() -> SignalFd {
