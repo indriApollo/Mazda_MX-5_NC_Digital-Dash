@@ -1,20 +1,30 @@
 mod serial_port;
 mod stnobd;
 
+use std::collections::VecDeque;
 use nix::sys::signal::{self, sigprocmask, Signal};
 use nix::sys::signalfd::{SigSet, SignalFd};
 use nix::sys::epoll::{Epoll, EpollCreateFlags, EpollEvent, EpollFlags, EpollTimeout};
 use nix::sys::termios::BaudRate;
-use crate::serial_port::{SerialPort};
+use crate::stnobd::{Stnobd, STNOBD_CFG_DISABLE_ECHO, STNOBD_CFG_DISABLE_SPACES, STNOBD_CFG_ENABLE_HEADER, STNOBD_CFG_FILTER_BRAKES, STNOBD_CFG_FILTER_COOLANT_THROTTLE_INTAKE, STNOBD_CFG_FILTER_FUEL_LEVEL, STNOBD_CFG_FILTER_RPM_SPEED_ACCEL, STNOBD_CFG_FILTER_WHEEL_SPEEDS};
 
 fn main() {
     enum EpollEventId {
-        Signal
+        Signal,
+        Stnobd
     }
 
-    let serial_port = SerialPort::new("/dev/pts/2");
-    serial_port.set_access_exclusive();
-    serial_port.configure(1, 1, BaudRate::B921600);
+    let mut cmds = VecDeque::new();
+    cmds.push_back(STNOBD_CFG_DISABLE_ECHO);
+    cmds.push_back(STNOBD_CFG_ENABLE_HEADER);
+    cmds.push_back(STNOBD_CFG_DISABLE_SPACES);
+    cmds.push_back(STNOBD_CFG_FILTER_BRAKES);
+    cmds.push_back(STNOBD_CFG_FILTER_RPM_SPEED_ACCEL);
+    cmds.push_back(STNOBD_CFG_FILTER_COOLANT_THROTTLE_INTAKE);
+    cmds.push_back(STNOBD_CFG_FILTER_FUEL_LEVEL);
+    cmds.push_back(STNOBD_CFG_FILTER_WHEEL_SPEEDS);
+
+    let mut stnobd = Stnobd::new("/dev/pts/2", BaudRate::B921600, cmds);
 
     let sfd = setup_signal_handler();
 
@@ -22,7 +32,12 @@ fn main() {
         .expect("epoll");
 
     epoll.add(&sfd, EpollEvent::new(EpollFlags::EPOLLIN, EpollEventId::Signal as u64))
-        .expect("epoll add");
+        .expect("epoll add signalFd");
+
+    epoll.add(stnobd.get_fd(), EpollEvent::new(EpollFlags::EPOLLIN, EpollEventId::Stnobd as u64))
+        .expect("epoll add stnobd");
+
+    stnobd.send_reset_cmd();
 
     println!("Ready");
 
@@ -37,9 +52,10 @@ fn main() {
             break;
         }
 
+        if events[0].data() == EpollEventId::Stnobd as u64 {
+            stnobd.handle_incoming_stnobd_msg();
+        }
     }
-
-    serial_port.set_access_nonexclusive();
 }
 
 fn setup_signal_handler() -> SignalFd {

@@ -19,13 +19,8 @@ fn set_tiocnxcl(fd: &OwnedFd) -> nix::Result<()> {
     Ok(())
 }
 
-fn flush_serial_port(fd: &OwnedFd, flush_arg: FlushArg) {
-    tcflush(fd, flush_arg)
-        .expect("tcflush");
-}
-
 pub struct SerialPort {
-    fd: OwnedFd
+    pub fd: OwnedFd
 }
 
 impl SerialPort {
@@ -101,7 +96,7 @@ impl SerialPort {
     }
 
     pub fn read(&self, buf: &mut [u8]) -> usize {
-        let fd = unsafe { self.fd.as_raw_fd() };
+        let fd = self.fd.as_raw_fd();
         read(fd, buf)
             .expect("read")
     }
