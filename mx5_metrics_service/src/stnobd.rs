@@ -165,26 +165,32 @@ impl Stnobd {
         if c != remaining_rsp_len {
             println!("partial rsp : got {}, expected {}", c, remaining_rsp_len);
             self.mon_rsp_pos += c;
-            return
+            return // Let's continue, next read might complete the response
         }
 
+        // Monitoring responses should end with \r, let's investigate
         if !self.mon_rsp_buf.last().is_some_and(|cr| *cr == b'\r') {
-            println!("misaligned rsp");
-            
             let cr_index = self.mon_rsp_buf.iter().position(|x| *x == b'\r');
 
+            // Response looks valid but misaligned
             if cr_index.is_some() {
+                println!("misaligned rsp");
                 let after_cr_index = cr_index.unwrap() + 1;
                 let after_cr_len = MON_RSP_LEN - after_cr_index;
 
                 // Move everything after \r to the start of the buffer
                 // and advance pos
                 self.mon_rsp_buf.copy_within(after_cr_index..after_cr_index + after_cr_len, 0);
-                self.mon_rsp_pos = after_cr_index;
+                self.mon_rsp_pos = after_cr_len;
                 return
             }
+
+            // Response is missing \r, probably some garbage
+            // Continue normal read flow, hoping to get a proper response eventually
+            println!("missing cr");
         }
 
+        // Got a complete response, reset read pos
         self.mon_rsp_pos = 0;
     }
 
