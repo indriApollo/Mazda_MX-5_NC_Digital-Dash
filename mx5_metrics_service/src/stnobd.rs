@@ -54,18 +54,19 @@ impl Stnobd {
         match self.cfg_cmds.pop_front() {
             // Send next command
             Some(cmd) => {
-                println!("sending cfg cmd {}", cmd);
+                println!("sending cfg cmd '{}'", &cmd[..cmd.len() - 1] /* omit CR */);
                 self.serial_port.write(cmd.as_bytes());
             }
             // Or start monitoring once all commands were sent
             None => {
+                self.must_configure = false;
                 self.start_monitoring_mode();
             }
         }
     }
 
     fn handle_cfg_rsp(&mut self) {
-        const CFG_ACK: &str = ">OK\r";
+        const CFG_ACK: &str = "OK\r>";
 
         let mut buf: [u8; CFG_ACK.len()] = [0; CFG_ACK.len()];
 
@@ -76,7 +77,7 @@ impl Stnobd {
 
         // TODO retry
         if c != buf.len() || !contains_slice(&buf, CFG_ACK.as_bytes()) {
-            println!("didnt get expected cfg ack {}, {}\n", c, String::from_utf8_lossy(&buf));
+            println!("didnt get expected cfg ack : len {}, '{}'", c, String::from_utf8_lossy(&buf));
         }
 
         self.serial_port.flush_all();
@@ -89,6 +90,7 @@ impl Stnobd {
         // Get rid of any existing unwanted bytes
         self.serial_port.flush_all();
 
+        println!("starting monitoring mode");
         self.serial_port.write(CMD.as_bytes());
 
         self.in_monitoring_mode = true;
@@ -97,6 +99,7 @@ impl Stnobd {
     fn stop_monitoring_mode(&mut self) {
         const CMD: &str = "\r";
 
+        println!("stopping monitoring mode");
         self.serial_port.write(CMD.as_bytes());
 
         self.in_monitoring_mode = false;
