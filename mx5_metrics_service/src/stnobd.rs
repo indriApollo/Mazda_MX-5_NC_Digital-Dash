@@ -22,13 +22,16 @@ pub const STNOBD_CFG_FILTER_COOLANT_THROTTLE_INTAKE: &str = "STFPA240,FFF\r";
 pub const STNOBD_CFG_FILTER_FUEL_LEVEL: &str = "STFPA430,FFF\r";
 pub const STNOBD_CFG_FILTER_WHEEL_SPEEDS: &str = "STFPA4B0,FFF\r";
 
+const MON_RSP_LEN: usize = 20;
 
 pub struct Stnobd {
     serial_port: SerialPort,
     reset_in_progress: bool,
     must_configure: bool,
     in_monitoring_mode: bool,
-    cfg_cmds: VecDeque<&'static str>
+    cfg_cmds: VecDeque<&'static str>,
+    mon_rsp_buf: [u8; MON_RSP_LEN],
+    mon_rsp_pos: usize,
 }
 
 impl Stnobd {
@@ -42,7 +45,9 @@ impl Stnobd {
             reset_in_progress: false,
             must_configure: false,
             in_monitoring_mode: false,
-            cfg_cmds: cmds
+            cfg_cmds: cmds,
+            mon_rsp_buf: [0; 20],
+            mon_rsp_pos: 0
         }
     }
 
@@ -150,8 +155,37 @@ impl Stnobd {
         }
     }
 
-    fn handle_monitoring_rsp(&self) {
+    fn handle_monitoring_rsp(&mut self) {
+        let remaining_rsp_len = MON_RSP_LEN - self.mon_rsp_pos;
 
+        let c = self.serial_port.read(&mut self.mon_rsp_buf[self.mon_rsp_pos..]);
+
+        println!("{}", String::from_utf8_lossy(&self.mon_rsp_buf[self.mon_rsp_pos..self.mon_rsp_pos + c]));
+
+        if c != remaining_rsp_len {
+            println!("partial rsp : got {}, expected {}", c, remaining_rsp_len);
+            self.mon_rsp_pos += c;
+            return
+        }
+
+        if !self.mon_rsp_buf.last().is_some_and(|cr| *cr == b'\r') {
+            println!("misaligned rsp");
+            
+            let cr_index = self.mon_rsp_buf.iter().position(|x| *x == b'\r');
+
+            if cr_index.is_some() {
+                let after_cr_index = cr_index.unwrap() + 1;
+                let after_cr_len = MON_RSP_LEN - after_cr_index;
+
+                // Move everything after \r to the start of the buffer
+                // and advance pos
+                self.mon_rsp_buf.copy_within(after_cr_index..after_cr_index + after_cr_len, 0);
+                self.mon_rsp_pos = after_cr_index;
+                return
+            }
+        }
+
+        self.mon_rsp_pos = 0;
     }
 
     pub fn handle_incoming_stnobd_msg(&mut self)
