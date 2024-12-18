@@ -1,11 +1,13 @@
 mod serial_port;
 mod stnobd;
+mod metrics;
 
 use std::collections::VecDeque;
 use nix::sys::signal::{self, sigprocmask, Signal};
 use nix::sys::signalfd::{SigSet, SignalFd};
 use nix::sys::epoll::{Epoll, EpollCreateFlags, EpollEvent, EpollFlags, EpollTimeout};
 use nix::sys::termios::BaudRate;
+use crate::metrics::Metrics;
 use crate::stnobd::{Stnobd, STNOBD_CFG_DISABLE_ECHO, STNOBD_CFG_DISABLE_SPACES, STNOBD_CFG_ENABLE_HEADER, STNOBD_CFG_FILTER_BRAKES, STNOBD_CFG_FILTER_COOLANT_THROTTLE_INTAKE, STNOBD_CFG_FILTER_FUEL_LEVEL, STNOBD_CFG_FILTER_RPM_SPEED_ACCEL, STNOBD_CFG_FILTER_WHEEL_SPEEDS};
 
 fn main() {
@@ -39,6 +41,8 @@ fn main() {
 
     stnobd.send_reset_cmd();
 
+    let mut metrics = Metrics::new();
+
     println!("Ready");
 
     let mut events = [EpollEvent::empty()];
@@ -53,7 +57,7 @@ fn main() {
         }
 
         if events[0].data() == EpollEventId::Stnobd as u64 {
-            stnobd.handle_incoming_stnobd_msg();
+            stnobd.handle_incoming_stnobd_msg(&mut metrics);
         }
     }
 }

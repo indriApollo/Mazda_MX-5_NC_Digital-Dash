@@ -1,8 +1,10 @@
+use std::str;
 use std::collections::VecDeque;
 use std::os::fd::OwnedFd;
 use std::thread::sleep;
 use std::time::Duration;
 use nix::sys::termios::BaudRate;
+use crate::metrics::Metrics;
 use crate::serial_port::{SerialPort};
 
 fn contains_slice(haystack: &[u8], needle: &[u8]) -> bool {
@@ -22,7 +24,10 @@ pub const STNOBD_CFG_FILTER_COOLANT_THROTTLE_INTAKE: &str = "STFPA240,FFF\r";
 pub const STNOBD_CFG_FILTER_FUEL_LEVEL: &str = "STFPA430,FFF\r";
 pub const STNOBD_CFG_FILTER_WHEEL_SPEEDS: &str = "STFPA4B0,FFF\r";
 
-const MON_RSP_LEN: usize = 20;
+
+const CAN_ID_STR_LEN: usize = 3;
+const CAN_DATA_STR_LEN: usize = 16;
+const MON_RSP_LEN: usize = CAN_ID_STR_LEN + CAN_DATA_STR_LEN + 1 /* CR */;
 
 pub struct Stnobd {
     serial_port: SerialPort,
@@ -31,7 +36,7 @@ pub struct Stnobd {
     in_monitoring_mode: bool,
     cfg_cmds: VecDeque<&'static str>,
     mon_rsp_buf: [u8; MON_RSP_LEN],
-    mon_rsp_pos: usize,
+    mon_rsp_pos: usize
 }
 
 impl Stnobd {
@@ -155,12 +160,12 @@ impl Stnobd {
         }
     }
 
-    fn handle_monitoring_rsp(&mut self) {
+    fn handle_monitoring_rsp(&mut self, metrics: &mut Metrics) {
         let remaining_rsp_len = MON_RSP_LEN - self.mon_rsp_pos;
 
         let c = self.serial_port.read(&mut self.mon_rsp_buf[self.mon_rsp_pos..]);
 
-        println!("{}", String::from_utf8_lossy(&self.mon_rsp_buf[self.mon_rsp_pos..self.mon_rsp_pos + c]));
+        //println!("{}", String::from_utf8_lossy(&self.mon_rsp_buf[self.mon_rsp_pos..self.mon_rsp_pos + c]));
 
         if c != remaining_rsp_len {
             println!("partial rsp : got {}, expected {}", c, remaining_rsp_len);
@@ -168,33 +173,45 @@ impl Stnobd {
             return // Let's continue, next read might complete the response
         }
 
-        // Monitoring responses should end with \r, let's investigate
-        if !self.mon_rsp_buf.last().is_some_and(|cr| *cr == b'\r') {
-            let cr_index = self.mon_rsp_buf.iter().position(|x| *x == b'\r');
+        // Monitoring responses should end with \r
+        match self.mon_rsp_buf.iter().rposition(|x| *x == b'\r') {
+            Some(cr_index) => {
+                // Got a complete response
+                if cr_index == MON_RSP_LEN - 1 {
+                    let can_id_str = unsafe { str::from_utf8_unchecked(&self.mon_rsp_buf[..CAN_ID_STR_LEN]) };
+                    let can_id = u16::from_str_radix(can_id_str, 16).unwrap();
 
-            // Response looks valid but misaligned
-            if cr_index.is_some() {
-                println!("misaligned rsp");
-                let after_cr_index = cr_index.unwrap() + 1;
-                let after_cr_len = MON_RSP_LEN - after_cr_index;
+                    let can_data_str = unsafe { str::from_utf8_unchecked(&self.mon_rsp_buf[CAN_ID_STR_LEN..CAN_ID_STR_LEN + CAN_DATA_STR_LEN]) };
+                    let can_data = u64::from_str_radix(can_data_str, 16).unwrap();
 
-                // Move everything after \r to the start of the buffer
-                // and advance pos
-                self.mon_rsp_buf.copy_within(after_cr_index..after_cr_index + after_cr_len, 0);
-                self.mon_rsp_pos = after_cr_len;
-                return
+                    println!("can msg id {:#x} data {:#x}", can_id, can_data);
+                    metrics.handle_can_msg(can_id, can_data);
+
+                    // Reset read pos
+                    self.mon_rsp_pos = 0;
+                }
+                // Response looks valid but misaligned
+                else {
+                    println!("misaligned rsp");
+                    let after_cr_index = cr_index + 1;
+                    let after_cr_len = MON_RSP_LEN - after_cr_index;
+
+                    // Move everything after \r to the start of the buffer
+                    // and advance pos
+                    self.mon_rsp_buf.copy_within(after_cr_index..after_cr_index + after_cr_len, 0);
+                    self.mon_rsp_pos = after_cr_len;
+                }
             }
-
-            // Response is missing \r, probably some garbage
-            // Continue normal read flow, hoping to get a proper response eventually
-            println!("missing cr");
+            None => {
+                // Response is missing \r, probably some garbage
+                // Reset read pos, hoping to get a proper response eventually
+                println!("missing cr");
+                self.mon_rsp_pos = 0;
+            }
         }
-
-        // Got a complete response, reset read pos
-        self.mon_rsp_pos = 0;
     }
 
-    pub fn handle_incoming_stnobd_msg(&mut self)
+    pub fn handle_incoming_stnobd_msg(&mut self, metrics: &mut Metrics)
     {
         if self.reset_in_progress {
             return self.handle_reset_rsp();
@@ -205,7 +222,7 @@ impl Stnobd {
         }
 
         if self.in_monitoring_mode {
-            return self.handle_monitoring_rsp();
+            return self.handle_monitoring_rsp(metrics);
         }
 
         self.serial_port.flush_all();
