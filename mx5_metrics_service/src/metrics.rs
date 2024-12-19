@@ -82,6 +82,7 @@ impl Metrics {
         /*let brake_pressure = (((can_data & BRAKE_PRESSURE_MASK) >> BRAKE_PRESSURE_BIT_SHIFT) as i16 - BRAKE_PRESSURE_OFFSET)
             .max(0);
         self.brakes_pct = (brake_pressure as f32 * BRAKE_PRESSURE_COEF) as u8;*/
+        self.brakes_pct = 100;
     }
 
     fn handle_rpm_speed_accel(&mut self, can_data: u64) {

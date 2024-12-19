@@ -3,12 +3,20 @@ mod stnobd;
 mod metrics;
 
 use std::collections::VecDeque;
+use std::num::NonZeroUsize;
+use nix::fcntl::OFlag;
+use nix::libc::{off_t};
 use nix::sys::signal::{self, sigprocmask, Signal};
 use nix::sys::signalfd::{SigSet, SignalFd};
 use nix::sys::epoll::{Epoll, EpollCreateFlags, EpollEvent, EpollFlags, EpollTimeout};
+use nix::sys::mman::{mmap, shm_open, MapFlags, ProtFlags};
+use nix::sys::stat::Mode;
 use nix::sys::termios::BaudRate;
+use nix::unistd::ftruncate;
 use crate::metrics::Metrics;
 use crate::stnobd::{Stnobd, STNOBD_CFG_DISABLE_ECHO, STNOBD_CFG_DISABLE_SPACES, STNOBD_CFG_ENABLE_HEADER, STNOBD_CFG_FILTER_BRAKES, STNOBD_CFG_FILTER_COOLANT_THROTTLE_INTAKE, STNOBD_CFG_FILTER_FUEL_LEVEL, STNOBD_CFG_FILTER_RPM_SPEED_ACCEL, STNOBD_CFG_FILTER_WHEEL_SPEEDS};
+
+const SHM_NAME: &str = "/mx5metrics";
 
 fn main() {
     enum EpollEventId {
@@ -41,7 +49,7 @@ fn main() {
 
     stnobd.send_reset_cmd();
 
-    let mut metrics = Metrics::new();
+    let mut metrics = setup_shared_memory_metrics();
 
     println!("Ready");
 
@@ -91,5 +99,23 @@ fn handle_signal(sfd: &SignalFd) {
         Err(e) => {
             panic!("Error reading signal: {}", e);
         }
+    }
+}
+
+fn setup_shared_memory_metrics() -> &'static mut Metrics {
+    let shm_size = NonZeroUsize::new(size_of::<Metrics>()).unwrap();
+
+    let mode_755 = Mode::S_IRWXU | Mode::S_IRGRP | Mode::S_IXGRP | Mode::S_IROTH | Mode::S_IXOTH;
+    let shm_fd = shm_open(SHM_NAME, OFlag::O_CREAT | OFlag::O_RDWR, mode_755)
+        .expect("shm_open");
+
+    ftruncate(&shm_fd, shm_size.get() as off_t)
+        .expect("ftruncate");
+
+    unsafe {
+        let mmap_c_void_ptr = mmap(None, shm_size, ProtFlags::PROT_READ | ProtFlags::PROT_WRITE, MapFlags::MAP_SHARED, &shm_fd, 0)
+            .expect("mmap");
+
+        &mut *(mmap_c_void_ptr.as_ptr() as *mut Metrics)
     }
 }
