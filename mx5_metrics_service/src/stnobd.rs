@@ -3,6 +3,7 @@ use std::collections::VecDeque;
 use std::os::fd::OwnedFd;
 use std::thread::sleep;
 use std::time::Duration;
+use log::{debug, error, info, trace, warn};
 use nix::sys::termios::BaudRate;
 use crate::metrics::Metrics;
 use crate::serial_port::{SerialPort};
@@ -64,11 +65,12 @@ impl Stnobd {
         match self.cfg_cmds.pop_front() {
             // Send next command
             Some(cmd) => {
-                println!("sending cfg cmd '{}'", &cmd[..cmd.len() - 1] /* omit CR */);
+                debug!("sending cfg cmd '{}'", &cmd[..cmd.len() - 1] /* omit CR */);
                 self.serial_port.write(cmd.as_bytes());
             }
             // Or start monitoring once all commands were sent
             None => {
+                info!("config sent");
                 self.must_configure = false;
                 self.start_monitoring_mode();
             }
@@ -87,7 +89,7 @@ impl Stnobd {
 
         // TODO retry
         if c != buf.len() || !contains_slice(&buf, CFG_ACK.as_bytes()) {
-            println!("didnt get expected cfg ack : len {}, '{}'", c, String::from_utf8_lossy(&buf));
+            error!("didnt get expected cfg ack : len {}, '{}'", c, String::from_utf8_lossy(&buf));
         }
 
         self.serial_port.flush_all();
@@ -100,7 +102,7 @@ impl Stnobd {
         // Get rid of any existing unwanted bytes
         self.serial_port.flush_all();
 
-        println!("starting monitoring mode");
+        info!("starting monitoring mode");
         self.serial_port.write(CMD.as_bytes());
 
         self.in_monitoring_mode = true;
@@ -109,7 +111,7 @@ impl Stnobd {
     fn stop_monitoring_mode(&mut self) {
         const CMD: &str = "\r";
 
-        println!("stopping monitoring mode");
+        info!("stopping monitoring mode");
         self.serial_port.write(CMD.as_bytes());
 
         self.in_monitoring_mode = false;
@@ -126,7 +128,7 @@ impl Stnobd {
         self.reset_in_progress = true;
         self.must_configure = true;
 
-        println!("STN reset in progress");
+        info!("STN reset in progress");
     }
 
     fn handle_reset_rsp(&mut self) {
@@ -143,7 +145,7 @@ impl Stnobd {
         let c = self.serial_port.read(&mut buf);
 
         if c < STARTUP_MSG.len() {
-            println!("not enough bytes to contain STN startup msg");
+            warn!("not enough bytes to contain STN startup msg");
             return;
         }
 
@@ -154,7 +156,7 @@ impl Stnobd {
             // Get rid of any existing unwanted bytes
             self.serial_port.flush_all();
 
-            println!("STN reset done");
+            info!("STN reset done, sending config");
 
             self.send_cfg_cmd();
         }
@@ -165,10 +167,10 @@ impl Stnobd {
 
         let c = self.serial_port.read(&mut self.mon_rsp_buf[self.mon_rsp_pos..]);
 
-        //println!("{}", String::from_utf8_lossy(&self.mon_rsp_buf[self.mon_rsp_pos..self.mon_rsp_pos + c]));
+        trace!("{}", String::from_utf8_lossy(&self.mon_rsp_buf[self.mon_rsp_pos..self.mon_rsp_pos + c]));
 
         if c != remaining_rsp_len {
-            println!("partial rsp : got {}, expected {}", c, remaining_rsp_len);
+            trace!("partial rsp : got {}, expected {}", c, remaining_rsp_len);
             self.mon_rsp_pos += c;
             return // Let's continue, next read might complete the response
         }
@@ -184,7 +186,7 @@ impl Stnobd {
                     let can_data_str = unsafe { str::from_utf8_unchecked(&self.mon_rsp_buf[CAN_ID_STR_LEN..CAN_ID_STR_LEN + CAN_DATA_STR_LEN]) };
                     let can_data = u64::from_str_radix(can_data_str, 16).unwrap();
 
-                    println!("can msg id {:#x} data {:#x}", can_id, can_data);
+                    trace!("can msg id {:#x} data {:#x}", can_id, can_data);
                     metrics.handle_can_msg(can_id, can_data);
 
                     // Reset read pos
@@ -192,7 +194,7 @@ impl Stnobd {
                 }
                 // Response looks valid but misaligned
                 else {
-                    println!("misaligned rsp");
+                    warn!("got misaligned monitoring response");
                     let after_cr_index = cr_index + 1;
                     let after_cr_len = MON_RSP_LEN - after_cr_index;
 
@@ -205,7 +207,7 @@ impl Stnobd {
             None => {
                 // Response is missing \r, probably some garbage
                 // Reset read pos, hoping to get a proper response eventually
-                println!("missing cr");
+                warn!("got invalid monitoring response: missing cr");
                 self.mon_rsp_pos = 0;
             }
         }
@@ -226,7 +228,7 @@ impl Stnobd {
         }
 
         self.serial_port.flush_all();
-        println!("got unhandled stn msg");
+        error!("got unhandled stn msg");
     }
 }
 

@@ -3,7 +3,9 @@ mod stnobd;
 mod metrics;
 
 use std::collections::VecDeque;
+use std::mem;
 use std::num::NonZeroUsize;
+use log::{debug, info};
 use nix::fcntl::OFlag;
 use nix::libc::{off_t};
 use nix::sys::signal::{self, sigprocmask, Signal};
@@ -19,6 +21,11 @@ use crate::stnobd::{Stnobd, STNOBD_CFG_DISABLE_ECHO, STNOBD_CFG_DISABLE_SPACES, 
 const SHM_NAME: &str = "/mx5metrics";
 
 fn main() {
+    let env = env_logger::Env::default()
+        .filter_or("RUST_LOG", "info");
+
+    env_logger::init_from_env(env);
+
     enum EpollEventId {
         Signal,
         Stnobd
@@ -34,7 +41,7 @@ fn main() {
     cmds.push_back(STNOBD_CFG_FILTER_FUEL_LEVEL);
     cmds.push_back(STNOBD_CFG_FILTER_WHEEL_SPEEDS);
 
-    let mut stnobd = Stnobd::new("/dev/pts/2", BaudRate::B921600, cmds);
+    let mut stnobd = Stnobd::new("/dev/pts/3", BaudRate::B921600, cmds);
 
     let sfd = setup_signal_handler();
 
@@ -51,7 +58,7 @@ fn main() {
 
     let mut metrics = setup_shared_memory_metrics();
 
-    println!("Ready");
+    info!("Ready");
 
     let mut events = [EpollEvent::empty()];
 
@@ -68,6 +75,10 @@ fn main() {
             stnobd.handle_incoming_stnobd_msg(&mut metrics);
         }
     }
+
+    drop(stnobd);
+
+    info!("Bye :)");
 }
 
 fn setup_signal_handler() -> SignalFd {
@@ -84,10 +95,10 @@ fn handle_signal(sfd: &SignalFd) {
     match sfd.read_signal() {
         Ok(Some(signal)) => {
             if signal.ssi_signo == Signal::SIGINT as u32 {
-                println!("Got SIGINT")
+                debug!("Got SIGINT")
             }
             else if signal.ssi_signo == Signal::SIGTERM as u32 {
-                println!("Got SIGTERM")
+                debug!("Got SIGTERM")
             }
             else {
                 panic!("Unexpected signal: {}", signal.ssi_signo);
