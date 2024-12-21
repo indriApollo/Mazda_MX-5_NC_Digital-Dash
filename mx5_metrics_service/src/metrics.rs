@@ -1,4 +1,4 @@
-use log::{debug, error, warn};
+use log::{debug, error};
 
 const CAN_ID_BRAKES: u16 = 0x085; // 100hz
 const CAN_ID_RPM_SPEED_ACCEL: u16 = 0x201; // 100hz
@@ -58,38 +58,20 @@ const TEMP_OFFSET: i16 = 40;
 pub struct Metrics {
     rpm: u16,
     speed_kmh: u16,
-    accelerator_pedal_position_pct: u8,
-    calculated_engine_load_pct: u8,
     engine_coolant_temp_c: i16,
-    throttle_valve_position_pct: u8,
     intake_air_temp_c: i16,
-    fuel_level_pct: u8,
-    brakes_pct: u8,
     fl_speed_kmh: u16,
     fr_speed_kmh: u16,
     rl_speed_kmh: u16,
-    rr_speed_kmh: u16
+    rr_speed_kmh: u16,
+    accelerator_pedal_position_pct: u8,
+    calculated_engine_load_pct: u8,
+    throttle_valve_position_pct: u8,
+    fuel_level_pct: u8,
+    brakes_pct: u8
 }
 
 impl Metrics {
-    pub fn new() -> Self {
-        Metrics {
-            brakes_pct: 0,
-            rpm: 0,
-            speed_kmh: 0,
-            accelerator_pedal_position_pct: 0,
-            calculated_engine_load_pct: 0,
-            engine_coolant_temp_c: 0,
-            throttle_valve_position_pct: 0,
-            intake_air_temp_c: 0,
-            fuel_level_pct: 0,
-            fl_speed_kmh: 0,
-            fr_speed_kmh: 0,
-            rl_speed_kmh: 0,
-            rr_speed_kmh: 0
-        }
-    }
-
     pub fn handle_can_msg(&mut self, can_id: u16, can_data: u64) {
         match can_id {
             CAN_ID_BRAKES => self.handle_brakes(can_data),

@@ -3,7 +3,6 @@ mod stnobd;
 mod metrics;
 
 use std::collections::VecDeque;
-use std::mem;
 use std::num::NonZeroUsize;
 use log::{debug, info};
 use nix::fcntl::OFlag;
