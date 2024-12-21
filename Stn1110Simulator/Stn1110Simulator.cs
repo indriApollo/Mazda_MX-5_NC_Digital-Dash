@@ -142,19 +142,19 @@ public partial class Stn1110Simulator
         {
             try
             {
-                foreach (var id in _filteredCanIds)
+                /*foreach (var id in _filteredCanIds)
                 {
                     var data = _random.NextInt64();
                     Write(id);
                     await Task.Delay(3, cancellationToken); // simulate chopped transmission
                     WriteLine($"{data:X16}");
-                }
+                }*/
 
-                /*WriteLine("08571ED34B79EB53FC8");
-                WriteLine("201725BB5766DC709FA");
-                WriteLine("2405F4F8A4BC9876F4B");
-                WriteLine("4302F95A180D3CBEE9E");
-                WriteLine("4B029635C6448FBCD3D");*/
+                WriteLine("0850138000000000000");
+                WriteLine("20113480000571C5400");
+                WriteLine("2407F46007F46000000");
+                WriteLine("4307F00000000000000");
+                WriteLine("4B0AA00BB00CC00DD00");
 
                 
                 await Task.Delay(100, cancellationToken);
