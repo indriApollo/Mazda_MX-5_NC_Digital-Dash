@@ -5,8 +5,8 @@ use std::thread::sleep;
 use std::time::Duration;
 use log::{debug, error, info, trace, warn};
 use nix::sys::termios::BaudRate;
+use serial_port::SerialPort;
 use crate::metrics::Metrics;
-use crate::serial_port::{SerialPort};
 
 fn contains_slice(haystack: &[u8], needle: &[u8]) -> bool {
     if needle.len() > haystack.len() {

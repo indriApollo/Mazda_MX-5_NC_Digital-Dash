@@ -1,4 +1,3 @@
-mod serial_port;
 mod stnobd;
 mod metrics;
 mod shm_metrics;
