@@ -41,12 +41,40 @@ public class UbloxSimulator
         _port.WriteTimeout = 1000;
     }
     
-    public async Task Run(CancellationToken cancellationToken)
+    public void Run(CancellationToken cancellationToken)
     {
         _port.Open();
-        
+
+        var configured = false;
         while (!cancellationToken.IsCancellationRequested)
         {
+            if (configured)
+            {
+                byte[] posllh = [
+                    UbxSyncChar1,
+                    UbxSyncChar2,
+                    (byte)UbxClass.UbxNav,
+                    (byte)UbxId.UbxNavPosllh,
+                    28, 0, // len
+                    0, 0, 0, 0, // iTOW
+                    1, 0, 0, 0, // lon
+                    2, 0, 0, 0, // lat
+                    3, 0, 0, 0, // height
+                    4, 0, 0, 0, //hMSL
+                    5, 0, 0, 0, // hAcc
+                    6, 0, 0, 0, // vAcc
+                    0x34, 0x86 // ck
+                ];
+                Write(posllh);
+            }
+            else
+            {
+                var garbage = new byte[128];
+                Random.Shared.NextBytes(garbage);
+                Write(garbage);
+            }
+            
+            
             byte[] data;
             try
             {
@@ -57,12 +85,28 @@ public class UbloxSimulator
                 continue;
             }
 
-            byte[] valset = [UbxSyncChar1, UbxSyncChar2, (byte)UbxClass.UbxCfg, (byte)UbxId.UbxCfgValset];
+            byte[] valset = [
+                UbxSyncChar1,
+                UbxSyncChar2,
+                (byte)UbxClass.UbxCfg,
+                (byte)UbxId.UbxCfgValset
+            ];
             if (data[..4].SequenceEqual(valset))
             {
                 Console.WriteLine("got valset");
-                byte[] ack = [UbxSyncChar1, UbxSyncChar2, (byte)UbxClass.UbxAck, 1, 2, 0, (byte)UbxClass.UbxCfg, (byte)UbxId.UbxCfgValset, 0x98, 0xc1];
+                byte[] ack = [
+                    UbxSyncChar1,
+                    UbxSyncChar2,
+                    (byte)UbxClass.UbxAck,
+                    1, // ack
+                    2, 0, // len
+                    (byte)UbxClass.UbxCfg,
+                    (byte)UbxId.UbxCfgValset,
+                    0x98, 0xc1
+                ];
                 Write(ack);
+                
+                configured = true;
             }
         }
 

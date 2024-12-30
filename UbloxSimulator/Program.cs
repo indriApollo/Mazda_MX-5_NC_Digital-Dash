@@ -17,4 +17,4 @@ Console.CancelKeyPress += (s, e) =>
 var ubx = new UbloxSimulator.UbloxSimulator(portName, 38400);
 
 Console.WriteLine("Running");
-await ubx.Run(cts.Token);
+ubx.Run(cts.Token);
