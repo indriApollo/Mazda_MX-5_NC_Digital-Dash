@@ -138,13 +138,13 @@ impl Metrics {
         let fl = ((can_data & FL_SPEED_MASK) >> FL_SPEED_BIT_SHIFT) as u16;
         self.fl_speed_kmh = raw_speed_to_kmh(fl);
 
-        let fr = ((can_data & FR_SPEED_MASK) >> FR_SPEED_BIT_SHIFT)as u16;
+        let fr = ((can_data & FR_SPEED_MASK) >> FR_SPEED_BIT_SHIFT) as u16;
         self.fr_speed_kmh = raw_speed_to_kmh(fr);
 
-        let rl = ((can_data & RL_SPEED_MASK) >> RL_SPEED_BIT_SHIFT)as u16;
+        let rl = ((can_data & RL_SPEED_MASK) >> RL_SPEED_BIT_SHIFT) as u16;
         self.rl_speed_kmh = raw_speed_to_kmh(rl);
 
-        let rr = (can_data & RR_SPEED_MASK)as u16;
+        let rr = (can_data & RR_SPEED_MASK) as u16;
         self.rr_speed_kmh = raw_speed_to_kmh(rr);
 
         debug!("fl {} fr {} rl {} rr {} kmh\n",
