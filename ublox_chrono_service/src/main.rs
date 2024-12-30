@@ -1,11 +1,12 @@
-use std::collections::VecDeque;
+mod ublox;
+
 use log::{debug, info};
 use nix::sys::signal::{self, sigprocmask, Signal};
 use nix::sys::signalfd::{SigSet, SignalFd};
 use nix::sys::epoll::{Epoll, EpollCreateFlags, EpollEvent, EpollFlags, EpollTimeout};
 use nix::sys::termios::BaudRate;
+use crate::ublox::Ublox;
 
-const SERIAL_PORT_NAME: &str = "/dev/serial/by-id/usb-u-blox_AG_-_www.u-blox.com_u-blox_GNSS_receiver-if00";
 const SHM_NAME: &str = "/ubloxchrono";
 
 fn main() {
@@ -16,20 +17,10 @@ fn main() {
 
     enum EpollEventId {
         Signal,
-        Stnobd
+        Ublox
     }
 
-    let mut cmds = VecDeque::new();
-    cmds.push_back(STNOBD_CFG_DISABLE_ECHO);
-    cmds.push_back(STNOBD_CFG_ENABLE_HEADER);
-    cmds.push_back(STNOBD_CFG_DISABLE_SPACES);
-    cmds.push_back(STNOBD_CFG_FILTER_BRAKES);
-    cmds.push_back(STNOBD_CFG_FILTER_RPM_SPEED_ACCEL);
-    cmds.push_back(STNOBD_CFG_FILTER_COOLANT_THROTTLE_INTAKE);
-    cmds.push_back(STNOBD_CFG_FILTER_FUEL_LEVEL);
-    cmds.push_back(STNOBD_CFG_FILTER_WHEEL_SPEEDS);
-
-    let mut stnobd = Stnobd::new("/dev/pts/3", BaudRate::B921600, cmds);
+    let mut ublox = Ublox::new("/dev/pts/9", BaudRate::B38400);
 
     let sfd = setup_signal_handler();
 
@@ -39,13 +30,11 @@ fn main() {
     epoll.add(&sfd, EpollEvent::new(EpollFlags::EPOLLIN, EpollEventId::Signal as u64))
         .expect("epoll add signalFd");
 
-    epoll.add(stnobd.get_fd(), EpollEvent::new(EpollFlags::EPOLLIN, EpollEventId::Stnobd as u64))
-        .expect("epoll add stnobd");
+    epoll.add(ublox.get_fd(), EpollEvent::new(EpollFlags::EPOLLIN, EpollEventId::Ublox as u64))
+        .expect("epoll add ublox");
 
-    stnobd.send_reset_cmd();
+    ublox.configure();
 
-    let mut shm = ShmMetrics::new(SHM_NAME);
-    let mut metrics = &mut shm.metrics;
 
     info!("Ready at /dev/shm{}", SHM_NAME);
 
@@ -60,15 +49,14 @@ fn main() {
             break;
         }
 
-        if events[0].data() == EpollEventId::Stnobd as u64 {
-            stnobd.handle_incoming_stnobd_msg(&mut metrics);
+        if events[0].data() == EpollEventId::Ublox as u64 {
+            //
         }
     }
 
     info!("Shutting down ....");
 
-    drop(stnobd);
-    drop(shm);
+    drop(ublox);
 
     info!("Bye :)");
 }
