@@ -55,7 +55,7 @@ static void reset_read(const int nbytes_to_keep) {
     buffer_read.progress = SEARCH_FOR_SYNC;
 }
 
-static int set_uint8_cfg(uint8_t *buf, const uint32_t cfg_key, const bool status) {
+static int set_uint8_cfg(uint8_t *buf, const uint32_t cfg_key, const uint8_t  status) {
     memcpy(buf, &cfg_key, CFG_KEY_SIZE);
     buf[CFG_KEY_SIZE] = status;
 
