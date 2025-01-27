@@ -20,7 +20,7 @@ fn main() {
         Ublox
     }
 
-    let mut ublox = Ublox::new("/dev/pts/9", BaudRate::B38400);
+    let mut ublox = Ublox::new("/dev/pts/3", BaudRate::B38400);
 
     let sfd = setup_signal_handler();
 

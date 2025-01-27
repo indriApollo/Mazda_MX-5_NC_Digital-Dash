@@ -1,6 +1,7 @@
 use std::os::fd::OwnedFd;
 use nix::sys::termios::BaudRate;
 use serial_port::SerialPort;
+use crate::ublox::ReadProgress::SearchForSync;
 
 const UBX_SYNC_CHAR_1: u8 = 0xb5;
 const UBX_SYNC_CHAR_2: u8 = 0x62;
@@ -54,7 +55,7 @@ fn set_u16_cfg(cmd: &mut Vec<u8>, cfg: u32, val: u16) {
     cmd.append(&mut Vec::from(val.to_le_bytes()));
 }
 
-fn fletcher8(buffer: &[u8]) -> u16 { // todo fix
+fn fletcher8(buffer: &[u8]) -> u16 {
     let mut ck_a: u8 = 0;
     let mut ck_b: u8 = 0;
 
@@ -66,8 +67,19 @@ fn fletcher8(buffer: &[u8]) -> u16 { // todo fix
     u16::from_be_bytes([ck_a, ck_b])
 }
 
+enum ReadProgress {
+    SearchForSync,
+    HandleHeaderPayload,
+    VerifyCk
+}
+
 pub struct Ublox {
     serial_port: SerialPort,
+    buf: [u8; 256],
+    buf_read_pos: usize,
+    buf_read_count: usize,
+    buf_read_progress: ReadProgress,
+    buf_msg_start: usize
 }
 
 impl Ublox {
@@ -78,6 +90,11 @@ impl Ublox {
 
         Ublox {
             serial_port: sp,
+            buf: [0; 256],
+            buf_read_pos: 0,
+            buf_read_count: UBX_MIN_LEN,
+            buf_read_progress: SearchForSync,
+            buf_msg_start: 0
         }
     }
 
@@ -122,6 +139,99 @@ impl Ublox {
         cmd.append(&mut Vec::from(ck.to_le_bytes()));
 
         self.serial_port.write(&cmd);
+    }
+
+    pub fn handle_incoming_ublox_msg(&mut self) {
+
+    }
+
+    fn reset_read(&mut self, nbytes_to_keep: usize) {
+        self.buf_read_pos = nbytes_to_keep;
+        self.buf_read_count = UBX_MIN_LEN - nbytes_to_keep;
+        self.buf_read_progress = SearchForSync;
+    }
+
+    fn parse_ublox_msg(&mut self) {
+        let buf_slice = &mut self.buf[self.buf_read_pos..self.buf_read_count];
+        let c = self.serial_port.read(buf_slice);
+
+        self.buf_read_pos += c;
+        self.buf_read_count -= c;
+
+        if self.buf_read_count > 0 {
+            return // partial msg
+        }
+
+        if let SearchForSync = self.buf_read_progress {
+            match self.buf[..UBX_MIN_LEN].iter().position(|&b| b == UBX_SYNC_CHAR_1) {
+                Some(sync_pos) => {
+                    // the message starts at sync char 1
+                    self.buf_msg_start = sync_pos;
+                    self.buf_read_progress = ReadProgress::HandleHeaderPayload;
+                    if sync_pos > 0 {
+                        // since we had to skip n bytes to find sync char 1,
+                        // we need to fetch the next n bytes to again have UBX_MIN_LEN
+                        // bytes in our buffer
+                        self.buf_read_count = sync_pos;
+                        return // partial msg
+                    }
+                }
+                None => {
+                    // we didn't find sync char 1 in the available data
+                    self.reset_read(0);
+                    return
+                }
+            }
+        }
+
+        if let ReadProgress::HandleHeaderPayload = self.buf_read_progress {
+            if self.buf[self.buf_msg_start + 1] != UBX_SYNC_CHAR_2 {
+                // we expected sync char 2 immediately after sync char 1
+                // discard wrong sync char and look for sync char 1 again
+                let nbytes_to_keep = UBX_MIN_LEN - 1;
+                self.buf.copy_within(self.buf_msg_start + 1..nbytes_to_keep, 0);
+                self.reset_read(nbytes_to_keep);
+
+                return // unknown data
+            }
+
+            const uint16_t payload_len = as_uint16(buffer_read.ubx_msg + UBX_LEN_OFFSET);
+
+            buffer_read.progress = VERIFY_CK;
+
+            if (payload_len != 0) {
+                buffer_read.requested_count = payload_len;
+
+                if (buffer_read.offset + buffer_read.requested_count > sizeof(input_buffer)) {
+                    const uint8_t msg_class = buffer_read.ubx_msg[UBX_CLASS_OFFSET];
+                    const uint8_t msg_id = buffer_read.ubx_msg[UBX_ID_OFFSET];
+
+                    fprintf(stderr, "ubx msg class %d id %d len %d is too big for our %lu buffer\n", msg_class, msg_id,
+                            payload_len, sizeof(input_buffer));
+
+                    reset_read(0);
+
+                    return -PAYLOAD_TOO_BIG;
+                }
+
+                return PARTIAL_MSG;
+            }
+
+            assert(buffer_read.progress == VERIFY_CK);
+            const uint16_t payload_len = as_uint16(buffer_read.ubx_msg + UBX_LEN_OFFSET);
+            const uint16_t expected_ck = as_uint16(buffer_read.ubx_msg + UBX_PAYLOAD_OFFSET + payload_len);
+
+            const uint16_t actual_ck = fletcher8(buffer_read.ubx_msg + UBX_CLASS_OFFSET, UBX_HEADER_LEN + payload_len);
+            if (actual_ck != expected_ck) {
+                fprintf(stderr, "ck actual %04x but expected %04x\n", actual_ck, expected_ck);
+                return -CK_FAIL;
+            }
+
+            *msg = buffer_read.ubx_msg;
+            reset_read(0);
+
+            return 0;
+        }
     }
 }
 
